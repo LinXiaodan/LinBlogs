@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}注册{% endblock %}
+
+{% block beforehead %}
+<script>
+$(document).ready(function () {
+    $('#signin_btn').on('click', function () {
+
+    })
+});
+</script>
+{% endblock %}
+
+{% block content %}
+    <div>
+        <h1>欢迎注册</h1>
+        <form id="signin-form">
+            <div></div>
+            <div>
+                <label>名字：</label>
+                <div>
+                    <input id="signin_name" type="text" placeholder="名字" maxlength="50">
+                </div>
+            </div>
+            <div>
+                <label>密码：</label>
+                <div>
+                    <input id="password" type="password" placeholder="输入密码" maxlength="50">
+                </div>
+            </div>
+            <div>
+                <button id="signin_btn"><i></i>注册</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

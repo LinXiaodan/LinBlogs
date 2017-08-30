@@ -1,9 +1,77 @@
-{% extend 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}注册{% endblock %}
+
+{% block beforehead %}
+<script>
+function validateEmail(email) {
+    var re = /^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$/;
+    return re.test(email.toLowerCase());
+}
+$(document).ready(function () {
+    $('#register_btn').on('click', function () {
+        var name = $('#register_name').val();
+        var email = $('#register_email').val();
+        var password1 = $('#password1').val();
+        var password2 = $('#password2').val();
+        if (!name.trim()){
+            alert('请输入名字！');
+        }
+        else if(!email.trim()){
+            alert('请输入邮箱！');
+        }
+        else if(!validateEmail(email)){
+            alert('请输入正确的邮箱！');
+        }
+        else if(!password1.trim()){
+            alert('请输入密码！');
+        }
+        else if(password1.length < 6){
+            alert('密码长度至少为6！');
+        }
+        else if(password1 !== password2){
+            alert('两次输入的密码不一致！');
+        }
+        else{
+            alert('成功注册');
+        }
+    })
+});
+</script>
+{% endblock %}
 
 {% block content %}
     <div>
         <h1>欢迎注册</h1>
-        <form id="vm"
+        <form id="register-form">
+            <div></div>
+            <div>
+                <label>名字：</label>
+                <div>
+                    <input id="register_name" type="text" placeholder="名字" maxlength="50">
+                </div>
+            </div>
+            <div>
+                <label>电子邮件：</label>
+                <div>
+                    <input id="register_email" type="text" placeholder="your-name@example.com" maxlength="50">
+                </div>
+            </div>
+            <div>
+                <label>密码：</label>
+                <div>
+                    <input id="password1" type="password" placeholder="输入密码" maxlength="50">
+                </div>
+            </div>
+            <div>
+                <label>重复密码：</label>
+                <div>
+                    <input id="password2" type="password" placeholder="重复密码" maxlength="50">
+                </div>
+            </div>
+            <div>
+                <button id="register_btn"><i></i>注册</button>
+            </div>
+        </form>
     </div>
+{% endblock %}
