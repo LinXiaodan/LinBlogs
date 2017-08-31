@@ -5,6 +5,7 @@
 
 from flask import Flask, request, render_template, url_for
 import time
+from Models import User
 
 UPLOAD_FOLDER = 'path/uploads/'
 
@@ -32,7 +33,14 @@ def register():
     if request.method == 'GET':
         return render_template('register.html')
     else:
-        return 'register success'
+        user = User(username=request.form['username'], email=request.form['email'], password=request.form['password'])
+        user_insert = user.add_user()
+        if user_insert == 0:
+            return 'success'
+        elif user_insert == 1:
+            return 'name repeat'
+        else:
+            return 'email repeat'
 
 
 @app.route('/api/register', methods=['POST'])
