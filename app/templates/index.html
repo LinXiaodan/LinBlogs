@@ -2,5 +2,10 @@
 {% block title %}LinBlogs{% endblock %}
 
 {% block container %}
-    <h1>index</h1>
+    Hello,
+    {% if current_user.is_authenticated %}
+        {{ current_user.username }}
+    {% else %}
+        Stranger
+    {% endif %}!
 {% endblock %}

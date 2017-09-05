@@ -19,9 +19,3 @@ def index():
     #     name = form.name.data
     #     form.name.data = ''
     return render_template('index.html', form={}, name='')
-
-
-@main.route('/favicon.ico')
-def get_fav():
-    # return 'ico'
-    return redirect(url_for('static', filename='favicon.ico'))
