@@ -4,7 +4,6 @@
 # Author: LXD
 
 import os
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -12,6 +11,15 @@ class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY', 'hard to guess string')
 
 
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+
+class TestingConfig(Config):
+    TESTING = True
+
+
 config = {
-    'default': {}
+    'default': DevelopmentConfig,
+    'testing': TestingConfig
 }
