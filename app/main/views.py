@@ -6,6 +6,9 @@
 from datetime import datetime
 from flask import render_template, session, redirect, url_for
 from forms import NameForm
+from flask_login import login_required
+from ..decorators import admin_required, permission_required
+from ..models import Permission
 
 from . import main
 
@@ -19,3 +22,17 @@ def index():
     #     name = form.name.data
     #     form.name.data = ''
     return render_template('index.html', form={}, name='')
+
+
+@main.route('/admin')
+@login_required
+@admin_required
+def for_admin_only():
+    return 'For administrators!'
+
+
+@main.route('/moderators')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def for_moderators_only():
+    return 'For comment moderators!'

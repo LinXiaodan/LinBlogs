@@ -16,6 +16,7 @@ class Config(object):
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     LINBLOGS_MAIL_SUBJECT_PREFIX = '[LinBlogs]'
     LINBLOGS_MAIL_SENDER = '1340787373@qq.com'
+    LINBLOGS_ADMIN = '1340787373@qq.com'
 
 
 class DevelopmentConfig(Config):

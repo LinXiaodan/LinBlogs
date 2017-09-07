@@ -45,7 +45,7 @@ def login():
         if user:
             if verify_password(user.get('password'), form.password.data):
                 new_user = temp(user_id=user.get('_id'), username=user.get('username'), email=user.get('email'),
-                                password=user.get('password'), confirmed=user.get('confirmed'))
+                                password=user.get('password'), confirmed=user.get('confirmed'), role=user.get('role'))
                 login_user(new_user, form.remember_me.data)
                 return redirect(request.args.get('next') or url_for('main.index'))
 
@@ -72,7 +72,7 @@ def register():
         new_user = User(email=form.email.data, username=form.username.data, password=form.password.data)
         user = new_user.add_user()
         user_temp = temp(user_id=user.get('_id'), username=user.get('username'), email=user.get('email'),
-                         password=user.get('password'), confirmed=False)
+                         password=user.get('password'), confirmed=False, role=user.get('role'))
         token = user_temp.generate_confirmation_token()
         send_email(user_temp.email, 'Confirm Your Account', 'auth/email/confirm', user=user_temp, token=token)
         flash('A confirmation email has been send to you by email')
