@@ -5,9 +5,13 @@
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from bson import ObjectId
 from . import login_manager
+from flask import current_app
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 def verify_password(user_password, password):
@@ -17,51 +21,29 @@ def verify_password(user_password, password):
 @login_manager.user_loader
 def load_user(user_id):
     user = MongoClient().LinBlogsDB.User.find_one({'_id': ObjectId(user_id)})
-    return temp(user_id=user_id, username=user.get('username'), email=user.get('email'), password=user.get('password'))
+    return temp(user_id=user_id, username=user.get('username'), email=user.get('email'), password=user.get('password'),
+                confirmed=user.get('confirmed'))
 
 
 class User(object):
     def __init__(self, **kwargs):
-        self.username = kwargs.get('username', 'nameNone')
-        self.email = kwargs.get('email', 'emailNone')
-        self.password = generate_password_hash(kwargs.get('password', 'passwordNone'))
+        self.username = kwargs.get('username')
+        self.email = kwargs.get('email')
+        self.password = generate_password_hash(kwargs.get('password'))
         self.db = MongoClient().LinBlogsDB.User
 
     def add_user(self):
-        result = self.find_user()
-        if result == 0:
-            collection = {
-                'username': self.username,
-                'email': self.email,
-                'password': self.password
-            }
-            self.db.insert(collection)
-
-        return result
-
-    def find_user(self):
-        name_find = self.db.find_one({'username': self.username})
-        if name_find:
-            return 1
-        email_find = self.db.find_one({'email': self.email})
-        if email_find:
-            return 2
-        return 0
+        collection = {
+            'username': self.username,
+            'email': self.email,
+            'password': self.password,
+            'confirmed': False
+        }
+        self.db.insert(collection)
+        return self.db.find_one({'email': self.email})
 
     def __repr__(self):
         return self.username
-
-    def verify_password(self):
-        """
-        验证密码
-        :return: 0：密码和用户名匹配， 1：密码错误， 2：用户名不存在
-        """
-        result = self.db.find_one({'email': self.email})
-        if result:
-            if check_password_hash(result.get('password'), self.password):
-                return 0
-            return 1
-        return 2
 
 
 class temp(UserMixin):
@@ -69,14 +51,37 @@ class temp(UserMixin):
     is_anonymous = False
     is_authenticated = True
 
-    def __init__(self, user_id, username, email, password):
-        self.id = user_id
+    def __init__(self, user_id, username, email, password, confirmed):
+        self.id = str(user_id)
         self.username = username
         self.email = email
         self.password = password
+        self.db = MongoClient().LinBlogsDB.User
+        self.confirmed = confirmed
 
     def get_id(self):
         return self.id
+
+    def generate_confirmation_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'confirm': self.id})
+
+    def confirm(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        if data.get('confirm') != self.id:
+            return False
+        user = self.db.find_one({'_id': self.id})
+        if user:
+            if user.get('confirmed'):
+                return False
+            self.db.update({'_id': self.id}, {'$set': {'confirmed': True}})
+            return True
+        else:
+            return False
 
     def __repr__(self):
         return self.username

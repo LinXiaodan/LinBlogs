@@ -1,0 +1,11 @@
+Dear {{ user.username }}
+
+Welcome to LinBlogs!
+
+To confirm your account please click here.
+
+Sincerely,
+
+The LinBlogs Team
+
+Note: replies to this email address are not monitored.
