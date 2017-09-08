@@ -10,6 +10,7 @@ from bson import ObjectId
 from . import login_manager
 from flask import current_app
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from datetime import datetime
 import logging
 logging.basicConfig(level=logging.INFO)
 
@@ -22,7 +23,9 @@ def verify_password(user_password, password):
 def load_user(user_id):
     user = MongoClient().LinBlogsDB.User.find_one({'_id': ObjectId(user_id)})
     return temp(user_id=user_id, username=user.get('username'), email=user.get('email'), password=user.get('password'),
-                confirmed=user.get('confirmed'), role=user.get('role'))
+                confirmed=user.get('confirmed'), role=user.get('role'), location=user.get('location'),
+                about_me=user.get('about_me'), member_since=user.get('member_since'), last_seen=user.get('last_seen'),
+                name=user.get('name'))
 
 
 class User(object):
@@ -34,9 +37,9 @@ class User(object):
         self.password = generate_password_hash(kwargs.get('password'))
 
         if self.email == current_app.config['LINBLOGS_ADMIN']:
-            self.role = MongoClient().LinBlogsDB.Role.find_one({'permissions': 0xff})
+            self.role = MongoClient().LinBlogsDB.Role.find_one({'permissions': 0xff}).get('name')
         else:
-            self.role = MongoClient().LinBlogsDB.Role.find_one({'default': True})
+            self.role = MongoClient().LinBlogsDB.Role.find_one({'default': True}).get('name')
 
     def add_user(self):
         collection = {
@@ -44,10 +47,15 @@ class User(object):
             'email': self.email,
             'password': self.password,
             'confirmed': False,
-            'role': self.role
+            'role': self.role,
+            'location': '',
+            'about_me': '',
+            'member_since': datetime.now(),
+            'last_seen': datetime.now(),
+            'name': ''
         }
         self.conn.insert(collection)
-        return self.conn.find_one({'email': self.email})
+        return collection
 
     def __repr__(self):
         return self.username
@@ -59,13 +67,20 @@ class temp(UserMixin):
     is_authenticated = True
     conn = MongoClient().LinBlogsDB.User
 
-    def __init__(self, user_id, username, email, password, confirmed, role):
+    def __init__(self, user_id, username, email, password, confirmed, role, location, about_me, member_since,
+                 last_seen, name):
         self.id = str(user_id)
         self.username = username
         self.email = email
         self.password = password
         self.confirmed = confirmed
-        self.role = role
+        role_coll = MongoClient().LinBlogsDB.Role.find_one({'name': role})
+        self.role = Role(name=role, permissions=role_coll.get('permissions'), default=role_coll.get('default'))
+        self.location = location
+        self.about_me = about_me
+        self.member_since = member_since
+        self.last_seen = last_seen
+        self.name = name
 
     def get_id(self):
         return self.id
@@ -92,10 +107,14 @@ class temp(UserMixin):
             return False
 
     def can(self, permissions):
-        return self.role is not None and (self.role['permissions'] & permissions) == permissions
+        return self.role is not None and (self.role.permissions & permissions) == permissions
 
     def is_administrator(self):
         return self.can(Permission.ADMINISTER)
+
+    def ping(self):
+        self.last_seen = datetime.now()
+        self.conn.update({'email': self.email}, {'$set': {'last_seen': self.last_seen}})
 
     def __repr__(self):
         return self.username

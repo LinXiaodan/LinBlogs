@@ -30,7 +30,6 @@ def create_app(config_name):
 
     login_manager.init_app(app)
 
-    # 路由及错误页面
     from main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 

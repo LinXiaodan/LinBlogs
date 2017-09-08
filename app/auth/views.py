@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 @auth.before_app_request
 def before_request():
     if current_user.is_authenticated:
-        # current_user.ping()
+        current_user.ping()
         if not current_user.confirmed \
                 and request.endpoint[:5] != 'auth.' \
                 and request.endpoint != 'static':
@@ -45,13 +45,17 @@ def login():
         if user:
             if verify_password(user.get('password'), form.password.data):
                 new_user = temp(user_id=user.get('_id'), username=user.get('username'), email=user.get('email'),
-                                password=user.get('password'), confirmed=user.get('confirmed'), role=user.get('role'))
+                                password=user.get('password'), confirmed=user.get('confirmed'), role=user.get('role'),
+                                location=user.get('location'), about_me=user.get('about_me'),
+                                member_since=user.get('member_since'), last_seen=user.get('last_seen'),
+                                name=user.get('name'))
                 login_user(new_user, form.remember_me.data)
                 return redirect(request.args.get('next') or url_for('main.index'))
 
             flash('Invalid password')
+            return render_template('auth/login.html', form=form)
 
-        flash('Invalid username')
+        flash('Invalid email')
 
     return render_template('auth/login.html', form=form)
 
@@ -72,7 +76,9 @@ def register():
         new_user = User(email=form.email.data, username=form.username.data, password=form.password.data)
         user = new_user.add_user()
         user_temp = temp(user_id=user.get('_id'), username=user.get('username'), email=user.get('email'),
-                         password=user.get('password'), confirmed=False, role=user.get('role'))
+                         password=user.get('password'), confirmed=False, role=user.get('role'),
+                         location=user.get('location'), about_me=user.get('about_me'),
+                         member_since=user.get('member_since'), last_seen=user.get('last_seen'), name=user.get('name'))
         token = user_temp.generate_confirmation_token()
         send_email(user_temp.email, 'Confirm Your Account', 'auth/email/confirm', user=user_temp, token=token)
         flash('A confirmation email has been send to you by email')
@@ -109,7 +115,7 @@ def confirm(token):
 @auth.route('/confirm')
 @login_required
 def resend_confirmation():
-    token = current_user.generate_confirm_token()
+    token = current_user.generate_confirmation_token()
     send_email(current_user.email, 'Confirm Your Account', 'auth/email/confirm', user=current_user, token=token)
     flash('A new confirmation email has been send to you by email')
     return redirect(url_for('main.index'))
