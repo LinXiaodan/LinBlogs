@@ -4,15 +4,18 @@
 # Author: LXD
 
 from datetime import datetime
-from flask import render_template, session, redirect, url_for, abort, flash
-from forms import NameForm, EditProfileForm
+from flask import render_template, session, redirect, url_for, abort, flash, request
+from forms import NameForm, EditProfileForm, EditProfileAdminForm
 from flask_login import login_required, current_user
 from ..decorators import admin_required, permission_required
 from ..models import Permission, temp
-from .. import moment
+from bson import ObjectId
+from ..Models.user import UserModel
 
 from . import main
 from pymongo import MongoClient
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -64,3 +67,44 @@ def edit_profile():
     form.location.data = current_user.location
     form.about_me.data = current_user.about_me
     return render_template('edit_profile.html', form=form)
+
+
+@main.route('/edit-profile-admin', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_profile_admin():
+
+    user_id = request.args.get('user_id')
+    user = UserModel.query_user({'_id': ObjectId(user_id)})
+    if user is None:
+        abort(404)
+
+    form = EditProfileAdminForm()
+    if form.validate_on_submit():
+        new_user = {
+            'email': form.email.data,
+            'username': form.username.data,
+            'confirmed': form.confirmed.data,
+            'role': form.role.data,
+            'name': form.name.data,
+            'location': form.location.data,
+            'about_me': form.about_me.data,
+        }
+        if UserModel.query_user({'email': new_user['email']}):
+            UserModel.update_user({'email': new_user['email']}, new_user)
+            flash('The profile of {} has been updated.'.format(new_user['email']))
+        else:
+            UserModel.insert_user(new_user)
+            flash('The profile of {} has been added.'.format(new_user['email']))
+        return redirect(url_for('.user', username=new_user['username']))
+
+    form.email.data = user.get('email')
+    form.username.data = user.get('username')
+    form.confirmed.data = user.get('confirmed')
+    form.role.data = user.get('role')
+    form.name.data = user.get('name')
+    form.location.data = user.get('location')
+    form.about_me.data = user.get('about_me')
+    return render_template('edit_profile.html', form=form)
+
+
