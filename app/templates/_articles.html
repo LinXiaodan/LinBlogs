@@ -1,0 +1,13 @@
+<ul class="articles">
+    {% if articles %}
+        {% for article in articles %}
+        <li class="article">
+            <div class="article-date">{{ moment(article.issuing_time).fromNow() }}</div>
+            <div class="article-author">
+                <a href="{{ url_for('.user', username=article.username) }}">{{ article.username }}</a>
+            </div>
+            <div class="article-body">{{ article.body }}</div>
+        </li>
+        {% endfor %}
+    {% endif %}
+</ul>

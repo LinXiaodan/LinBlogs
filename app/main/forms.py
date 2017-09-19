@@ -41,3 +41,13 @@ class EditProfileAdminForm(FlaskForm):
         user = UserModel.query_user({'username': field.data})
         if user is not None and user['email'] != self.email.data and user['username'] == field.data:
             raise ValidationError('Username already in use.')
+
+    def validate_email(self, field):
+        user = UserModel.query_user({'email': field.data})
+        if not user:
+            raise ValidationError('Email is not registered.')
+
+
+class ArticleForm(FlaskForm):
+    body = TextAreaField("What's on your mind?", validators=[Required()])
+    submit = SubmitField('Submit')

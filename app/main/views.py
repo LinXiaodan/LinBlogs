@@ -5,22 +5,35 @@
 
 from datetime import datetime
 from flask import render_template, session, redirect, url_for, abort, flash, request
-from forms import NameForm, EditProfileForm, EditProfileAdminForm
+from forms import NameForm, EditProfileForm, EditProfileAdminForm, ArticleForm
 from flask_login import login_required, current_user
 from ..decorators import admin_required, permission_required
-from ..models import Permission, temp
+from ..models import Permission, temp, Article
 from bson import ObjectId
 from ..Models.user import UserModel
+from ..Models.article import ArticleModel
+from ..Models.pagination import Paginate
 
 from . import main
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 import logging
 logging.basicConfig(level=logging.INFO)
 
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html', form={}, name='')
+    form = ArticleForm()
+    if current_user.can(Permission.WRITE_ARTICLES) and form.validate_on_submit():
+        Article(form.body.data).add_article()
+        return redirect(url_for('.index'))
+
+    page = int(request.args.get('page', 1))
+    logging.info('page: {}'.format(page))
+    pagination = Paginate(collection_name='Article', page=page)
+    logging.info('page: {}'.format(pagination.page))
+    logging.info('page num: {}'.format(pagination.page_num))
+    articles = pagination.items
+    return render_template('index.html', form=form, articles=articles, pagination=pagination)
 
 
 @main.route('/admin')
@@ -45,7 +58,8 @@ def user(username):
                          password=user.get('password'), confirmed=False, role=user.get('role'),
                          location=user.get('location'), about_me=user.get('about_me'),
                          member_since=user.get('member_since'), last_seen=user.get('last_seen'), name=user.get('name'))
-        return render_template('user.html', user=user_temp)
+        articles = ArticleModel.query_article({'username': username})
+        return render_template('user.html', user=user_temp, articles=articles)
 
     abort(404)
 

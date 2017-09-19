@@ -5,7 +5,7 @@
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient
-from flask_login import UserMixin, AnonymousUserMixin
+from flask_login import UserMixin, AnonymousUserMixin, current_user
 from bson import ObjectId
 from . import login_manager
 from flask import current_app
@@ -154,3 +154,18 @@ class AnonymousUser(AnonymousUserMixin):
 
 
 login_manager.anonymous_user = AnonymousUser
+
+
+class Article(object):
+    def __init__(self, body):
+        self.body = body
+
+    def add_article(self):
+        new_article = {
+            'user_id': current_user.id,
+            'username': current_user.username,
+            'body': self.body,
+            'issuing_time': datetime.now()
+        }
+        MongoClient().LinBlogsDB.Article.insert(new_article)
+        return new_article

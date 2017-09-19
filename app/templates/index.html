@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+{% import '_macros.html' as macros %}
+
 {% block title %}LinBlogs{% endblock %}
 
 {% block container %}
@@ -8,4 +11,17 @@
     {% else %}
         Stranger
     {% endif %}!
+
+    <div>
+        {% if current_user.can(Permission.WRITE_ARTICLES) %}
+        {{ wtf.quick_form(form) }}
+        {% endif %}
+    </div>
+
+    {% include '_articles.html' %}
+
+    <div class="pagination">
+        {{ macros.pagination_widget(pagination, '.index') }}
+    </div>
+
 {% endblock %}
