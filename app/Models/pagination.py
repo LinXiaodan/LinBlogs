@@ -36,15 +36,12 @@ class Paginate(object):
         else:
             self.has_next = False
 
-        current_num = self.page_num - per_page * (self.page - 1)
+        current_num = articles.count() - per_page * (self.page - 1)
         if current_num > per_page:
             current_num = per_page
         self.items = []
         for i in range(current_num):
             self.items.append(articles[per_page * (self.page - 1) + i])
-
-        logging.info(articles)
-        logging.info(self.items)
 
     def iter_pages(self, left_edge=2, left_current=2, right_current=2, right_edge=2):
         record = 0
