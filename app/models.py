@@ -11,6 +11,8 @@ from . import login_manager
 from flask import current_app
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from datetime import datetime
+import bleach
+from markdown import markdown
 import logging
 logging.basicConfig(level=logging.INFO)
 
@@ -159,12 +161,21 @@ login_manager.anonymous_user = AnonymousUser
 class Article(object):
     def __init__(self, body):
         self.body = body
+        self.body_html = self.get_body_html()
+
+    def get_body_html(self):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'pre', 'strong',
+                        'ul', 'h1', 'h2', 'h3', 'p']
+        body_html = bleach.linkify(bleach.clean(markdown(self.body, output_format='html'), tags=allowed_tags, strip=True))
+
+        return body_html
 
     def add_article(self):
         new_article = {
             'user_id': current_user.id,
             'username': current_user.username,
             'body': self.body,
+            'body_html': self.body_html,
             'issuing_time': datetime.now()
         }
         MongoClient().LinBlogsDB.Article.insert(new_article)

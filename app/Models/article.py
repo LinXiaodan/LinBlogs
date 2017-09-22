@@ -4,6 +4,8 @@
 # Author: LXD
 
 from pymongo import MongoClient, DESCENDING
+from ..models import Article
+from datetime import datetime
 
 
 class ArticleModel(object):
@@ -15,14 +17,10 @@ class ArticleModel(object):
         return ArticleModel.collection.find(item).sort('issuing_time', DESCENDING)
 
     @staticmethod
-    def paginate(item=None, page=1, per_page=5):
-        """返回按照分页得到的文章"""
-        if page == 1:
-            return ArticleModel.collection.find(item).\
-                sort('issuing_time', DESCENDING).\
-                limit(per_page)
-
-        return ArticleModel.collection.find(item).\
-            sort('issuing_time', DESCENDING).\
-            skip(per_page*(page-1)).\
-            limit(per_page)
+    def update_article(article_id, body):
+        update_item = {
+            'body': body,
+            'body_html': Article(body).body_html,
+            'issuing_time': datetime.now()
+        }
+        ArticleModel.collection.update({'_id': article_id}, {'$set': update_item})

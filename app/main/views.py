@@ -28,10 +28,7 @@ def index():
         return redirect(url_for('.index'))
 
     page = int(request.args.get('page', 1))
-    logging.info('page: {}'.format(page))
     pagination = Paginate(collection_name='Article', page=page)
-    logging.info('page: {}'.format(pagination.page))
-    logging.info('page num: {}'.format(pagination.page_num))
     articles = pagination.items
     return render_template('index.html', form=form, articles=articles, pagination=pagination)
 
@@ -122,3 +119,32 @@ def edit_profile_admin():
     return render_template('edit_profile.html', form=form)
 
 
+@main.route('/article/<id>')
+def post(id):
+    article = ArticleModel.query_article({'_id': ObjectId(id)})
+    if article.count() == 1:
+        return render_template('article.html', articles=article)
+    else:
+        abort(404)
+
+
+@main.route('/edit-article/<id>', methods=['GET', 'POST'])
+@login_required
+def edit(id):
+    article = ArticleModel.query_article({'_id': ObjectId(id)})
+    if article.count() == 0:
+        abort(404)
+
+    article = article[0]
+    if (current_user.id != article.get('user_id') and not current_user.is_administrator()) \
+            or not current_user.can(Permission.WRITE_ARTICLES):
+        abort(403)
+
+    form = ArticleForm()
+    if form.validate_on_submit():
+        ArticleModel.update_article(article_id=ObjectId(id), body=form.body.data)
+        flash('The article has been updated.')
+        return redirect(url_for('.post', id=id))
+
+    form.body.data = article.get('body')
+    return render_template('edit_article.html', form=form)

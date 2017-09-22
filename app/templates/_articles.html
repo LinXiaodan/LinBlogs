@@ -3,10 +3,33 @@
         {% for article in articles %}
         <li class="article">
             <div class="article-date">{{ moment(article.issuing_time).fromNow() }}</div>
+
             <div class="article-author">
                 <a href="{{ url_for('.user', username=article.username) }}">{{ article.username }}</a>
             </div>
-            <div class="article-body">{{ article.body }}</div>
+
+            <div class="article-body">
+                {% if article.body_html %}
+                    {{ article.body_html | safe }}
+                {% else %}
+                    {{ article.body }}
+                {% endif %}
+            </div>
+
+            <div class="article-footer">
+                {% if current_user.is_administrator() %}
+                <a href="{{ url_for('.edit', id=article.get('_id')) }}">
+                    <span class="label label-primary">Edit [Admin]</span>
+                </a>
+                {% elif current_user.id == article.user_id%}
+                <a href="{{ url_for('.edit', id=article.get('_id')) }}">
+                    <span class="label label-primary">Edit</span>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('.post', id=article.get('_id')) }}" target="_blank">
+                    <span class="label label-default">Permalink</span>
+                </a>
+            </div>
         </li>
         {% endfor %}
     {% endif %}
